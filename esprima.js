@@ -3055,6 +3055,7 @@ parseStatement: true, parseSourceElement: true */
     // the comments is active.
 
     function addComment(start, end, type, value) {
+        var comment, attacher, first = 0;
         assert(typeof start === 'number', 'Comment must have valid position');
 
         // Because the way the actual token is scanned, often the comments
@@ -3067,11 +3068,27 @@ parseStatement: true, parseSourceElement: true */
             }
         }
 
-        extra.comments.push({
+        comment = {
             range: [start, end],
             type: type,
             value: value
-        });
+        };
+
+        extra.comments.push(comment);
+
+        if (extra.owningComments) {
+            if (extra.previousToken) {
+                first = extra.previousToken.range[1];
+            }
+            attacher = {
+                comment: comment,
+                leadingCandidate: null,
+                trailingCandidate: null,
+                range: [ first, 0 ]
+            };
+            extra.outerComments.push(attacher);
+            extra.pendingComments.push(attacher);
+        }
     }
 
     function scanComment() {
@@ -3167,16 +3184,28 @@ parseStatement: true, parseSourceElement: true */
     function collectToken() {
         var token = extra.advance(),
             range,
-            value;
+            value,
+            i,
+            len;
+
+        if (extra.owningComments) {
+            for (i = 0, len = extra.outerComments.length; i < len; ++i) {
+                extra.outerComments[i].range[1] = token.range[0];
+            }
+            extra.outerComments.length = 0;
+            extra.previousToken = token;
+        }
 
         if (token.type !== Token.EOF) {
             range = [token.range[0], token.range[1] - 1];
             value = sliceSource(token.range[0], token.range[1]);
-            extra.tokens.push({
-                type: TokenName[token.type],
-                value: value,
-                range: range
-            });
+            if (extra.tokens) {
+                extra.tokens.push({
+                    type: TokenName[token.type],
+                    value: value,
+                    range: range
+                });
+            }
         }
 
         return token;
@@ -3224,7 +3253,7 @@ parseStatement: true, parseSourceElement: true */
         };
     }
 
-    function wrapTrackingFunction(range, loc) {
+    function wrapTrackingFunction(range, loc, owningComments) {
 
         return function (parseFunction) {
 
@@ -3253,7 +3282,7 @@ parseStatement: true, parseSourceElement: true */
             }
 
             return function () {
-                var node, rangeInfo, locInfo;
+                var node, rangeInfo, locInfo, i, comment;
 
                 skipComment();
                 rangeInfo = [index, 0];
@@ -3292,6 +3321,45 @@ parseStatement: true, parseSourceElement: true */
                             node.loc.start = node.object.loc.start;
                         }
                     }
+
+                    if (owningComments) {
+                        // Attaching comments
+
+                        // We must scan trailing comment before attaching comment to node.
+                        lookahead();
+
+                        for (i = extra.pendingComments.length - 1; i >= 0; --i) {
+                            comment = extra.pendingComments[i];
+                            if (comment.range[1] === node.range[0]) {
+                                if (!comment.leadingCandidate || node.type !== Syntax.Program) {
+                                    comment.leadingCandidate = node;
+                                }
+                            } else if (comment.range[0] === (node.range[1] + 1)) {
+                                if (!comment.trailingCandidate) {
+                                    comment.trailingCandidate = node;
+                                }
+                            } else if (node.range[0] < comment.range[0] && comment.range[1] < (node.range[1] + 1)) {
+                                if (comment.leadingCandidate) {
+                                    comment.leadingCandidate.leadingComment = comment.comment;
+                                } else if (comment.trailingCandidate) {
+                                    comment.trailingCandidate.trailingComment = comment.comment;
+                                }
+                                extra.pendingComments.splice(i, 1);
+                            }
+                        }
+                        if (node.type === Syntax.Program) {
+                            for (i = extra.pendingComments.length - 1; i >= 0; --i) {
+                                comment = extra.pendingComments[i];
+                                if (comment.leadingCandidate) {
+                                    comment.leadingCandidate.leadingComment = comment.comment;
+                                } else if (comment.trailingCandidate) {
+                                    comment.trailingCandidate.trailingComment = comment.comment;
+                                }
+                            }
+                            extra.pendingComments.length = 0;
+                        }
+                    }
+
                     return node;
                 }
             };
@@ -3313,9 +3381,9 @@ parseStatement: true, parseSourceElement: true */
             createLiteral = createRawLiteral;
         }
 
-        if (extra.range || extra.loc) {
+        if (extra.range || extra.loc || extra.owningComments) {
 
-            wrapTracking = wrapTrackingFunction(extra.range, extra.loc);
+            wrapTracking = wrapTrackingFunction(extra.range, extra.loc, extra.owningComments);
 
             extra.parseAdditiveExpression = parseAdditiveExpression;
             extra.parseAssignmentExpression = parseAssignmentExpression;
@@ -3392,12 +3460,14 @@ parseStatement: true, parseSourceElement: true */
             parseVariableIdentifier = wrapTracking(extra.parseVariableIdentifier);
         }
 
-        if (typeof extra.tokens !== 'undefined') {
+        if (typeof extra.tokens !== 'undefined' || extra.owningComments) {
             extra.advance = advance;
             extra.scanRegExp = scanRegExp;
 
             advance = collectToken;
-            scanRegExp = collectRegex;
+            if (typeof extra.tokens !== 'undefined') {
+                scanRegExp = collectRegex;
+            }
         }
     }
 
@@ -3410,7 +3480,7 @@ parseStatement: true, parseSourceElement: true */
             createLiteral = extra.createLiteral;
         }
 
-        if (extra.range || extra.loc) {
+        if (extra.range || extra.loc || extra.owningComments) {
             parseAdditiveExpression = extra.parseAdditiveExpression;
             parseAssignmentExpression = extra.parseAssignmentExpression;
             parseBitwiseANDExpression = extra.parseBitwiseANDExpression;
@@ -3490,14 +3560,21 @@ parseStatement: true, parseSourceElement: true */
 
         extra = {};
         if (typeof options !== 'undefined') {
-            extra.range = (typeof options.range === 'boolean') && options.range;
+            extra.owningComments = (typeof options.owningComments === 'boolean') && options.owningComments;
+            extra.range = ((typeof options.range === 'boolean') && options.range) || extra.owningComments;
             extra.loc = (typeof options.loc === 'boolean') && options.loc;
             extra.raw = (typeof options.raw === 'boolean') && options.raw;
+            if (extra.owningComments) {
+                extra.outerComments = [];
+                extra.pendingComments = [];
+                extra.previousToken = null;
+            }
             if (typeof options.tokens === 'boolean' && options.tokens) {
                 extra.tokens = [];
             }
-            if (typeof options.comment === 'boolean' && options.comment) {
+            if ((typeof options.comment === 'boolean' && options.comment) || extra.owningComments) {
                 extra.comments = [];
+                extra.outputComments = (typeof options.comment === 'boolean' && options.comment);
             }
             if (typeof options.tolerant === 'boolean' && options.tolerant) {
                 extra.errors = [];
@@ -3523,7 +3600,7 @@ parseStatement: true, parseSourceElement: true */
         patch();
         try {
             program = parseProgram();
-            if (typeof extra.comments !== 'undefined') {
+            if (extra.outputComments) {
                 program.comments = extra.comments;
             }
             if (typeof extra.tokens !== 'undefined') {

@@ -16354,6 +16354,373 @@ data = {
             }]
         }
 
+    },
+
+    'Owning comments': {
+
+        '(/*first*/1/*second*/ + /*third*/2/*forth*/) */*fifth*/ 3/*sixth*/': {
+            type: 'Program',
+            body: [{
+                type: 'ExpressionStatement',
+                expression: {
+                    type: 'BinaryExpression',
+                    operator: '*',
+                    left: {
+                        type: 'BinaryExpression',
+                        operator: '+',
+                        left: {
+                            type: 'Literal',
+                            value: 1,
+                            raw: '1',
+                            range: [10, 10],
+                            loc: {
+                                start: { line: 1, column: 10 },
+                                end: { line: 1, column: 11 }
+                            },
+                            trailingComment: {
+                                range: [11, 20],
+                                type: 'Block',
+                                value: 'second'
+                            }
+                        },
+                        right: {
+                            type: 'Literal',
+                            value: 2,
+                            raw: '2',
+                            range: [33, 33],
+                            loc: {
+                                start: { line: 1, column: 33 },
+                                end: { line: 1, column: 34 }
+                            },
+                            leadingComment: {
+                                range: [24, 32],
+                                type: 'Block',
+                                value: 'third'
+                            },
+                            trailingComment: {
+                                range: [34, 42],
+                                type: 'Block',
+                                value: 'forth'
+                            }
+                        },
+                        range: [0, 43],
+                        loc: {
+                            start: { line: 1, column: 0 },
+                            end: { line: 1, column: 44 }
+                        },
+                        leadingComment: {
+                            range: [1, 9],
+                            type: 'Block',
+                            value: 'first'
+                        }
+                    },
+                    right: {
+                        type: 'Literal',
+                        value: 3,
+                        raw: '3',
+                        range: [56, 56],
+                        loc: {
+                            start: { line: 1, column: 56 },
+                            end: { line: 1, column: 57 }
+                        },
+                        leadingComment: {
+                            'range': [46, 54],
+                            'type': 'Block',
+                            'value': 'fifth'
+                        },
+                        trailingComment: {
+                            range: [57, 65],
+                            type: 'Block',
+                            value: 'sixth'
+                        }
+                    },
+                    range: [0, 56],
+                    loc: {
+                        start: { line: 1, column: 0 },
+                        end: { line: 1, column: 57 }
+                    }
+                },
+                range: [0, 65],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 1, column: 66 }
+                }
+            }],
+            range: [0, 65],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 1, column: 66 }
+            }
+        },
+
+        'var x /* comment */;': {
+            type: 'Program',
+            body: [{
+                type: 'VariableDeclaration',
+                declarations: [{
+                    type: 'VariableDeclarator',
+                    id: {
+                        type: 'Identifier',
+                        name: 'x',
+                        range: [4, 4],
+                        loc: {
+                            start: { line: 1, column: 4 },
+                            end: { line: 1, column: 5 }
+                        },
+                        trailingComment: {
+                            range: [6, 18],
+                            type: 'Block',
+                            value: ' comment '
+                        }
+                    },
+                    init: null,
+                    range: [4, 4],
+                    loc: {
+                        start: { line: 1, column: 4 },
+                        end: { line: 1, column: 5 }
+                    }
+                }],
+                kind: 'var',
+                range: [0, 19],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 1, column: 20 }
+                }
+            }],
+            range: [0, 19],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 1, column: 20 }
+            }
+        },
+
+        '// line comment\n42': {
+            type: 'Program',
+            body: [{
+                type: 'ExpressionStatement',
+                expression: {
+                    type: 'Literal',
+                    value: 42,
+                    raw: '42',
+                    range: [16, 17],
+                    loc: {
+                        start: { line: 2, column: 0 },
+                        end: { line: 2, column: 2 }
+                    }
+                },
+                range: [16, 17],
+                loc: {
+                    start: { line: 2, column: 0 },
+                    end: { line: 2, column: 2 }
+                },
+                leadingComment: {
+                    range: [0, 15],
+                    type: 'Line',
+                    value: ' line comment'
+                }
+            }],
+            range: [16, 17],
+            loc: {
+                start: { line: 2, column: 0 },
+                end: { line: 2, column: 2 }
+            }
+        },
+
+        '42 // line comment': {
+            type: 'Program',
+            body: [{
+                type: 'ExpressionStatement',
+                expression: {
+                    type: 'Literal',
+                    value: 42,
+                    raw: '42',
+                    range: [0, 1],
+                    loc: {
+                        start: { line: 1, column: 0 },
+                        end: { line: 1, column: 2 }
+                    },
+                    trailingComment: {
+                        range: [3, 17],
+                        type: 'Line',
+                        value: ' line comment'
+                    }
+                },
+                range: [0, 17],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 1, column: 18 }
+                }
+            }],
+            range: [0, 17],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 1, column: 18 }
+            }
+        },
+
+        '42; // line comment': {
+            type: 'Program',
+            body: [{
+                type: 'ExpressionStatement',
+                expression: {
+                    type: 'Literal',
+                    value: 42,
+                    raw: '42',
+                    range: [0, 1],
+                    loc: {
+                        start: { line: 1, column: 0 },
+                        end: { line: 1, column: 2 }
+                    }
+                },
+                range: [0, 2],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 1, column: 3 }
+                },
+                trailingComment: {
+                    range: [4, 18],
+                    type: 'Line',
+                    value: ' line comment'
+                }
+            }],
+            range: [0, 2],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 1, column: 3 }
+            }
+        },
+
+        'if (x) { // Some comment\ndoThat(); }': {
+            type: 'Program',
+            body: [{
+                type: 'IfStatement',
+                test: {
+                    type: 'Identifier',
+                    name: 'x',
+                    range: [4, 4],
+                    loc: {
+                        start: { line: 1, column: 4 },
+                        end: { line: 1, column: 5 }
+                    }
+                },
+                consequent: {
+                    type: 'BlockStatement',
+                    body: [{
+                        type: 'ExpressionStatement',
+                        expression: {
+                            type: 'CallExpression',
+                            callee: {
+                                type: 'Identifier',
+                                name: 'doThat',
+                                range: [25, 30],
+                                loc: {
+                                    start: { line: 2, column: 0 },
+                                    end: { line: 2, column: 6 }
+                                }
+                            },
+                            'arguments': [],
+                            range: [25, 32],
+                            loc: {
+                                start: { line: 2, column: 0 },
+                                end: { line: 2, column: 8 }
+                            }
+                        },
+                        range: [25, 33],
+                        loc: {
+                            start: { line: 2, column: 0 },
+                            end: { line: 2, column: 9 }
+                        },
+                        leadingComment: {
+                            range: [9, 24],
+                            type: 'Line',
+                            value: ' Some comment'
+                        }
+                    }],
+                    range: [7, 35],
+                    loc: {
+                        start: { line: 1, column: 7 },
+                        end: { line: 2, column: 11 }
+                    }
+                },
+                alternate: null,
+                range: [0, 35],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 2, column: 11 }
+                }
+            }],
+            range: [0, 35],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 2, column: 11 }
+            }
+        },
+
+        'while (true) { continue // Comment\nthere; }': {
+            type: 'Program',
+            body: [{
+                type: 'WhileStatement',
+                test: {
+                    type: 'Literal',
+                    value: true,
+                    raw: 'true',
+                    range: [7, 10],
+                    loc: {
+                        start: { line: 1, column: 7 },
+                        end: { line: 1, column: 11 }
+                    }
+                },
+                body: {
+                    type: 'BlockStatement',
+                    body: [{
+                        type: 'ContinueStatement',
+                        label: null,
+                        range: [15, 22],
+                        loc: {
+                            start: { line: 1, column: 15 },
+                            end: { line: 1, column: 23 }
+                        }
+                    }, {
+                        type: 'ExpressionStatement',
+                        expression: {
+                            type: 'Identifier',
+                            name: 'there',
+                            range: [35, 39],
+                            loc: {
+                                start: { line: 2, column: 0 },
+                                end: { line: 2, column: 5 }
+                            }
+                        },
+                        range: [35, 40],
+                        loc: {
+                            start: { line: 2, column: 0 },
+                            end: { line: 2, column: 6 }
+                        },
+                        leadingComment: {
+                            range: [24, 34],
+                            type: 'Line',
+                            value: ' Comment'
+                        }
+                    }],
+                    range: [13, 42],
+                    loc: {
+                        start: { line: 1, column: 13 },
+                        end: { line: 2, column: 8 }
+                    }
+                },
+                range: [0, 42],
+                loc: {
+                    start: { line: 1, column: 0 },
+                    end: { line: 2, column: 8 }
+                }
+            }],
+            range: [0, 42],
+            loc: {
+                start: { line: 1, column: 0 },
+                end: { line: 2, column: 8 }
+            }
+        }
+
     }
 };
 
@@ -16399,6 +16766,21 @@ function errorToObject(e) {
     };
 }
 
+function isOwningCommentsFixture(syntax) {
+    var key;
+    for (key in syntax) {
+        if (key === 'leadingComment' || key == 'trailingComment') {
+            return true;
+        }
+        if (typeof syntax[key] === 'object' && syntax[key] !== null) {
+            if (isOwningCommentsFixture(syntax[key])) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function testParse(code, syntax) {
     'use strict';
     var expected, tree, actual, options, StringObject, i, len, err;
@@ -16412,13 +16794,14 @@ function testParse(code, syntax) {
         loc: true,
         tokens: (typeof syntax.tokens !== 'undefined'),
         raw: true,
-        tolerant: (typeof syntax.errors !== 'undefined')
+        tolerant: (typeof syntax.errors !== 'undefined'),
+        owningComments: isOwningCommentsFixture(syntax)
     };
 
     expected = JSON.stringify(syntax, null, 4);
     try {
         tree = esprima.parse(code, options);
-        tree = (options.comment || options.tokens || options.tolerant) ? tree : tree.body[0];
+        tree = (options.comment || options.tokens || options.tolerant || options.owningComments) ? tree : tree.body[0];
 
         if (options.tolerant) {
             for (i = 0, len = tree.errors.length; i < len; i += 1) {
