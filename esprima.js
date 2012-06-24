@@ -2047,14 +2047,14 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         return expr;
     }
 
-    function parseBitwiseORExpression() {
+    function parseBitwiseXORExpression() {
         var expr = parseBitwiseANDExpression();
 
-        while (match('|')) {
+        while (match('^')) {
             lex();
             expr = {
                 type: Syntax.BinaryExpression,
-                operator: '|',
+                operator: '^',
                 left: expr,
                 right: parseBitwiseANDExpression()
             };
@@ -2063,16 +2063,16 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         return expr;
     }
 
-    function parseBitwiseXORExpression() {
-        var expr = parseBitwiseORExpression();
+    function parseBitwiseORExpression() {
+        var expr = parseBitwiseXORExpression();
 
-        while (match('^')) {
+        while (match('|')) {
             lex();
             expr = {
                 type: Syntax.BinaryExpression,
-                operator: '^',
+                operator: '|',
                 left: expr,
-                right: parseBitwiseORExpression()
+                right: parseBitwiseXORExpression()
             };
         }
 
@@ -2082,7 +2082,7 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
     // 11.11 Binary Logical Operators
 
     function parseLogicalANDExpression() {
-        var expr = parseBitwiseXORExpression();
+        var expr = parseBitwiseORExpression();
 
         while (match('&&')) {
             lex();
@@ -2090,7 +2090,7 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
                 type: Syntax.LogicalExpression,
                 operator: '&&',
                 left: expr,
-                right: parseBitwiseXORExpression()
+                right: parseBitwiseORExpression()
             };
         }
 
@@ -3954,6 +3954,13 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
                         }
                         if (typeof node.object.loc !== 'undefined') {
                             node.loc.start = node.object.loc.start;
+                        }
+                    } else if (node.type === Syntax.CallExpression) {
+                        if (typeof node.callee.range !== 'undefined') {
+                            node.range[0] = node.callee.range[0];
+                        }
+                        if (typeof node.callee.loc !== 'undefined') {
+                            node.loc.start = node.callee.loc.start;
                         }
                     }
                     return node;

@@ -6199,168 +6199,6 @@ data = {
             }
         },
 
-        'universe(42).galaxies': {
-            type: 'ExpressionStatement',
-            expression: {
-                type: 'MemberExpression',
-                computed: false,
-                object: {
-                    type: 'CallExpression',
-                    callee: {
-                        type: 'Identifier',
-                        name: 'universe',
-                        range: [0, 8],
-                        loc: {
-                            start: { line: 1, column: 0 },
-                            end: { line: 1, column: 8 }
-                        }
-                    },
-                    'arguments': [{
-                        type: 'Literal',
-                        value: 42,
-                        raw: '42',
-                        range: [9, 11],
-                        loc: {
-                            start: { line: 1, column: 9 },
-                            end: { line: 1, column: 11 }
-                        }
-                    }],
-                    range: [8, 12],
-                    loc: {
-                        start: { line: 1, column: 8 },
-                        end: { line: 1, column: 12 }
-                    }
-                },
-                property: {
-                    type: 'Identifier',
-                    name: 'galaxies',
-                    range: [13, 21],
-                    loc: {
-                        start: { line: 1, column: 13 },
-                        end: { line: 1, column: 21 }
-                    }
-                },
-                range: [8, 21],
-                loc: {
-                    start: { line: 1, column: 8 },
-                    end: { line: 1, column: 21 }
-                }
-            },
-            range: [0, 21],
-            loc: {
-                start: { line: 1, column: 0 },
-                end: { line: 1, column: 21 }
-            }
-        },
-
-        'universe(42).galaxies(14, 3, 77).milkyway': {
-            type: 'ExpressionStatement',
-            expression: {
-                type: 'MemberExpression',
-                computed: false,
-                object: {
-                    type: 'CallExpression',
-                    callee: {
-                        type: 'MemberExpression',
-                        computed: false,
-                        object: {
-                            type: 'CallExpression',
-                            callee: {
-                                type: 'Identifier',
-                                name: 'universe',
-                                range: [0, 8],
-                                loc: {
-                                    start: { line: 1, column: 0 },
-                                    end: { line: 1, column: 8 }
-                                }
-                            },
-                            'arguments': [{
-                                type: 'Literal',
-                                value: 42,
-                                raw: '42',
-                                range: [9, 11],
-                                loc: {
-                                    start: { line: 1, column: 9 },
-                                    end: { line: 1, column: 11 }
-                                }
-                            }],
-                            range: [8, 12],
-                            loc: {
-                                start: { line: 1, column: 8 },
-                                end: { line: 1, column: 12 }
-                            }
-                        },
-                        property: {
-                            type: 'Identifier',
-                            name: 'galaxies',
-                            range: [13, 21],
-                            loc: {
-                                start: { line: 1, column: 13 },
-                                end: { line: 1, column: 21 }
-                            }
-                        },
-                        range: [8, 21],
-                        loc: {
-                            start: { line: 1, column: 8 },
-                            end: { line: 1, column: 21 }
-                        }
-                    },
-                    'arguments': [{
-                        type: 'Literal',
-                        value: 14,
-                        raw: '14',
-                        range: [22, 24],
-                        loc: {
-                            start: { line: 1, column: 22 },
-                            end: { line: 1, column: 24 }
-                        }
-                    }, {
-                        type: 'Literal',
-                        value: 3,
-                        raw: '3',
-                        range: [26, 27],
-                        loc: {
-                            start: { line: 1, column: 26 },
-                            end: { line: 1, column: 27 }
-                        }
-                    }, {
-                        type: 'Literal',
-                        value: 77,
-                        raw: '77',
-                        range: [29, 31],
-                        loc: {
-                            start: { line: 1, column: 29 },
-                            end: { line: 1, column: 31 }
-                        }
-                    }],
-                    range: [21, 32],
-                    loc: {
-                        start: { line: 1, column: 21 },
-                        end: { line: 1, column: 32 }
-                    }
-                },
-                property: {
-                    type: 'Identifier',
-                    name: 'milkyway',
-                    range: [33, 41],
-                    loc: {
-                        start: { line: 1, column: 33 },
-                        end: { line: 1, column: 41 }
-                    }
-                },
-                range: [21, 41],
-                loc: {
-                    start: { line: 1, column: 21 },
-                    end: { line: 1, column: 41 }
-                }
-            },
-            range: [0, 41],
-            loc: {
-                start: { line: 1, column: 0 },
-                end: { line: 1, column: 41 }
-            }
-        },
-
         'earth.asia.Indonesia.prepareForElection(2014)': {
             type: 'ExpressionStatement',
             expression: {
@@ -8802,60 +8640,6 @@ data = {
                 left: {
                     type: 'BinaryExpression',
                     operator: '&',
-                    left: {
-                        type: 'Identifier',
-                        name: 'x',
-                        range: [0, 1],
-                        loc: {
-                            start: { line: 1, column: 0 },
-                            end: { line: 1, column: 1 }
-                        }
-                    },
-                    right: {
-                        type: 'Identifier',
-                        name: 'y',
-                        range: [4, 5],
-                        loc: {
-                            start: { line: 1, column: 4 },
-                            end: { line: 1, column: 5 }
-                        }
-                    },
-                    range: [0, 5],
-                    loc: {
-                        start: { line: 1, column: 0 },
-                        end: { line: 1, column: 5 }
-                    }
-                },
-                right: {
-                    type: 'Identifier',
-                    name: 'z',
-                    range: [8, 9],
-                    loc: {
-                        start: { line: 1, column: 8 },
-                        end: { line: 1, column: 9 }
-                    }
-                },
-                range: [0, 9],
-                loc: {
-                    start: { line: 1, column: 0 },
-                    end: { line: 1, column: 9 }
-                }
-            },
-            range: [0, 9],
-            loc: {
-                start: { line: 1, column: 0 },
-                end: { line: 1, column: 9 }
-            }
-        },
-
-        'x | y ^ z': {
-            type: 'ExpressionStatement',
-            expression: {
-                type: 'BinaryExpression',
-                operator: '^',
-                left: {
-                    type: 'BinaryExpression',
-                    operator: '|',
                     left: {
                         type: 'Identifier',
                         name: 'x',
@@ -19335,9 +19119,9 @@ data = {
                         }
                     },
                     'arguments': [],
-                    range: [0, 43],
+                    range: [1, 43],
                     loc: {
-                        start: { line: 1, column: 0 },
+                        start: { line: 1, column: 1 },
                         end: { line: 1, column: 43 }
                     }
                 },
@@ -19420,9 +19204,9 @@ data = {
                         }
                     },
                     'arguments': [],
-                    range: [0, 37],
+                    range: [1, 37],
                     loc: {
-                        start: { line: 1, column: 0 },
+                        start: { line: 1, column: 1 },
                         end: { line: 1, column: 37 }
                     }
                 },
