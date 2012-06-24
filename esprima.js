@@ -134,7 +134,8 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         VariableDeclaration: 'VariableDeclaration',
         VariableDeclarator: 'VariableDeclarator',
         WhileStatement: 'WhileStatement',
-        WithStatement: 'WithStatement'
+        WithStatement: 'WithStatement',
+        YieldExpression: 'YieldExpression'
     };
 
     PropertyKind = {
@@ -162,6 +163,7 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         IllegalContinue: 'Illegal continue statement',
         IllegalBreak: 'Illegal break statement',
         IllegalReturn: 'Illegal return statement',
+        IllegalYield: 'Illegal yield expression',
         StrictModeWith:  'Strict mode code may not include a with statement',
         StrictCatchVariable:  'Catch variable may not be eval or arguments in strict mode',
         StrictVarName:  'Variable name may not be eval or arguments in strict mode',
@@ -2175,6 +2177,10 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
     function parseAssignmentExpression() {
         var expr;
 
+        if (matchKeyword('yield')) {
+            return parseYieldExpression();
+        }
+
         expr = parseConditionalExpression();
 
         if (matchAssign()) {
@@ -3588,6 +3594,28 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
     }
 
     // 15 Program
+
+    function parseYieldExpression() {
+        var delegate;
+
+        expectKeyword('yield');
+
+        if (!state.inFunctionBody) {
+            throwErrorTolerant({}, Messages.IllegalYield);
+        }
+
+        delegate = false;
+        if (match('*')) {
+            lex();
+            delegate = true;
+        }
+
+        return {
+            type: Syntax.YieldExpression,
+            argument: parseAssignmentExpression(),
+            delegate: delegate
+        };
+    }
 
     function parseSourceElement() {
         var token = lookahead();
