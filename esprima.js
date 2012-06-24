@@ -152,7 +152,6 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         UnexpectedReserved:  'Unexpected reserved word',
         UnexpectedEOS:  'Unexpected end of input',
         NewlineAfterThrow:  'Illegal newline after throw',
-        NewlineAfterModule:  'Illegal newline after module',
         InvalidRegExp: 'Invalid regular expression',
         UnterminatedRegExp:  'Invalid regular expression: missing /',
         InvalidLHSInAssignment:  'Invalid left-hand side in assignment',
@@ -340,11 +339,6 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         }
 
         if (strict && isStrictModeReservedWord(id)) {
-            return true;
-        }
-
-        // Harmony
-        if (id === 'module') {
             return true;
         }
 
@@ -1185,14 +1179,33 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
         return buffer;
     }
 
-    // Return true if there is a line terminator before the next token.
-
-    function peekLineTerminator() {
-        var pos, line, start, found;
+    function lookahead2() {
+        var pos, line, start, result;
 
         pos = index;
         line = lineNumber;
         start = lineStart;
+        advance();
+        result = advance();
+        index = pos;
+        lineNumber = line;
+        lineStart = start;
+
+        return result;
+    }
+
+    // Return true if there is a line terminator before the next token.
+
+    function peekLineTerminator(skip) {
+        var pos, line, start, found;
+        skip = skip || 0;
+
+        pos = index;
+        line = lineNumber;
+        start = lineStart;
+        while (skip--) {
+            advance();
+        }
         skipComment();
         found = lineNumber !== line;
         index = pos;
@@ -2367,10 +2380,9 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
     function parseModuleDeclaration() {
         var id, token, declaration;
 
-        expectKeyword('module');
-
-        if (peekLineTerminator()) {
-            throwError({}, Messages.NewlineAfterModule);
+        token = lex();
+        if (token.value !== 'module') {
+            throwUnexpected(token);
         }
 
         id = parseVariableIdentifier();
@@ -2469,7 +2481,7 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
 
         token = lookahead();
 
-        if (token.type === Token.Keyword) {
+        if (token.type === Token.Keyword || (token.type === Token.Identifier && token.value === 'module')) {
             switch (token.value) {
             case 'function':
                 return {
@@ -3600,10 +3612,14 @@ parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseCon
     function parseProgramElement() {
         var token = lookahead();
 
-        if (token.type === Token.Keyword) {
+        if (token.type === Token.Keyword || (token.type === Token.Identifier && token.value === 'module')) {
             switch (token.value) {
             case 'module':
-                return parseModuleDeclaration(token.value);
+                if (lookahead2().type === Token.Identifier && !peekLineTerminator(1)) {
+                    return parseModuleDeclaration(token.value);
+                } else {
+                    break;
+                }
             case 'export':
                 return parseExportDeclaration();
             case 'import':
