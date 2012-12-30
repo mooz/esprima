@@ -85,7 +85,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         NumericLiteral: 6,
         Punctuator: 7,
         StringLiteral: 8,
-        Template: 9
+        Template: 9,
+        XMLComment: 10
     };
 
     TokenName = {};
@@ -602,10 +603,58 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         };
     }
 
+    // E4X scanner
+
+    function scanXMLComment() {
+        var start, ch1, ch2, ch3;
+
+        start = index;
+        index += 4;  // <!--
+
+        while (index < length) {
+            ch1 = source.charCodeAt(index);
+            // --
+            if (isLineTerminator(ch1)) {
+                if (ch1 === 13 && source.charCodeAt(index + 1) === 10) {
+                    ++index;
+                }
+                ++lineNumber;
+                ++index;
+                lineStart = index;
+            } else if (ch1 === 45) {
+                ++index;
+                if (index >= length) {
+                    return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                }
+                ch2 = source.charCodeAt(index);
+                if (ch2 === 45) {
+                    ++index;
+                    ch3 = source.charCodeAt(index);
+                    if (index >= length) {
+                        return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                    if (ch3 !== 62) {
+                        return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                    }
+                    ++index;
+                    return {
+                        type: Token.XMLComment,
+                        lineNumber: lineNumber,
+                        lineStart: lineStart,
+                        range: [start, index]
+                    };
+                }
+            } else {
+                ++index;
+            }
+        }
+        return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+    }
+
 
     // 7.7 Punctuators
 
-    function scanPunctuator() {
+    function scanPunctuatorOrXML() {
         var start = index,
             code = source.charCodeAt(index),
             code2,
@@ -701,6 +750,11 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     range: [start, index]
                 };
             }
+        }
+
+        if (ch1 === '<' && ch2 === '!' && ch3 === '-' && ch4 === '-') {
+            // XML Comment
+            return scanXMLComment();
         }
 
         // 3-character punctuators: === !== >>> <<= >>=
@@ -1386,7 +1440,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
         // Very common: ( and ) and ;
         if (ch === 40 || ch === 41 || ch === 58) {
-            return scanPunctuator();
+            return scanPunctuatorOrXML();
         }
 
         // String literal starts with single quote (#39) or double quote (#34).
@@ -1407,14 +1461,14 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             if (isDecimalDigit(source.charCodeAt(index + 1))) {
                 return scanNumericLiteral();
             }
-            return scanPunctuator();
+            return scanPunctuatorOrXML();
         }
 
         if (isDecimalDigit(ch)) {
             return scanNumericLiteral();
         }
 
-        return scanPunctuator();
+        return scanPunctuatorOrXML();
     }
 
     function lex() {
@@ -2078,10 +2132,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             };
         },
 
-        createXMLComment: function (contents) {
+        createXMLComment: function (token) {
             return {
                 type: Syntax.XMLComment,
-                contents: contents
+                contents: source.slice(token.range[0] + 4, token.range[1] - 3)
             };
         },
 
@@ -2580,7 +2634,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         return expr;
     }
 
-    // E4X
+    // E4X parser
 
     function parseXMLForEachStatement() {
         var test, update, left, right, body, oldInIteration, each;
@@ -2799,6 +2853,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
         if (match('/') || match('/=')) {
             return delegate.createLiteral(scanRegExp());
+        }
+
+        if (type === Token.XMLComment) {
+            return delegate.createXMLComment(lex());
         }
 
         if (match('<')) {
