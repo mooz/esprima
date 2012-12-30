@@ -87,7 +87,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         StringLiteral: 8,
         Template: 9,
         XMLComment: 10,
-        XMLCdata: 11
+        XMLCdata: 11,
+        XMLProcessingInstruction: 12
     };
 
     TokenName = {};
@@ -689,6 +690,75 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
     }
 
+    function scanXMLProcessingInstruction() {
+        var start, ch, state, target, contents, id;
+
+        start = index;
+        index += 2;  // <?
+        state = 0;  // 0 => target, 1 => space, 2 => contents
+        target = '';
+        contents = '';
+
+        ch = source.charCodeAt(index);
+        if (!isIdentifierStart(ch)) {
+            return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+        }
+        target = (ch === 92) ? getEscapedIdentifier() : getIdentifier();
+        if (!target) {
+            return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+        }
+
+        // skip whitespace
+        while (index < length) {
+            ch = source.charCodeAt(index);
+            if (isWhiteSpace(ch)) {
+                ++index;
+            } else if (isLineTerminator(ch)) {
+                ++index;
+                if (ch === 13 && source.charCodeAt(index) === 10) {
+                    ++index;
+                }
+                ++lineNumber;
+                lineStart = index;
+            } else {
+                break;
+            }
+        }
+
+        while (index < length) {
+            ch = source.charCodeAt(index);
+            // ?>
+            if (isLineTerminator(ch)) {
+                if (ch === 13 && source.charCodeAt(index + 1) === 10) {
+                    ++index;
+                }
+                ++lineNumber;
+                ++index;
+                lineStart = index;
+            } else if (ch === 63) {
+                ++index;
+                if (index >= length) {
+                    return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                }
+                if (source.charCodeAt(index) === 62) {
+                    ++index;
+                    return {
+                        type: Token.XMLProcessingInstruction,
+                        target: target,
+                        contents: contents,
+                        lineNumber: lineNumber,
+                        lineStart: lineStart,
+                        range: [start, index]
+                    };
+                }
+            } else {
+                contents += source[index];
+                ++index;
+            }
+        }
+        return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+    }
+
 
     // 7.7 Punctuators
 
@@ -790,14 +860,19 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             }
         }
 
-        if (ch1 === '<' && ch2 === '!') {
-            if (ch3 === '-' && ch4 === '-') {
-                return scanXMLComment();
-            }
-            if (ch3 === '[' && ch4 === 'C' && source[index + 4] === 'D' && source[index + 5] === 'A' && source[index + 6] === 'T' && source[index + 7] === 'A' && source[index + 8] === '[') {
-                return scanXMLCdata();
+        if (ch1 === '<') {
+            if (ch2 === '!') {
+                if (ch3 === '-' && ch4 === '-') {
+                    return scanXMLComment();
+                }
+                if (ch3 === '[' && ch4 === 'C' && source[index + 4] === 'D' && source[index + 5] === 'A' && source[index + 6] === 'T' && source[index + 7] === 'A' && source[index + 8] === '[') {
+                    return scanXMLCdata();
+                }
+            } else if (ch2 === '?') {
+                return scanXMLProcessingInstruction();
             }
         }
+
 
         // 3-character punctuators: === !== >>> <<= >>=
 
@@ -2903,6 +2978,11 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
         if (type === Token.XMLCdata) {
             return delegate.createXMLCdata(lex());
+        }
+
+        if (type === Token.XMLProcessingInstruction) {
+            lex();
+            return delegate.createXMLProcessingInstruction(token.target, token.contents);
         }
 
         if (match('<')) {
