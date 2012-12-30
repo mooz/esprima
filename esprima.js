@@ -86,7 +86,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         Punctuator: 7,
         StringLiteral: 8,
         Template: 9,
-        XMLComment: 10
+        XMLComment: 10,
+        XMLCdata: 11
     };
 
     TokenName = {};
@@ -651,6 +652,43 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
     }
 
+    function scanXMLCdata() {
+        var start, ch;
+
+        start = index;
+        index += 9;  // <![CDATA[
+
+        while (index < length) {
+            ch = source.charCodeAt(index);
+            // ]]>
+            if (isLineTerminator(ch)) {
+                if (ch === 13 && source.charCodeAt(index + 1) === 10) {
+                    ++index;
+                }
+                ++lineNumber;
+                ++index;
+                lineStart = index;
+            } else if (ch === 93) {
+                ++index;
+                if (index >= length) {
+                    return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+                }
+                if (source.charCodeAt(index) === 93 && source.charCodeAt(index + 1) === 62) {
+                    index += 2;
+                    return {
+                        type: Token.XMLCdata,
+                        lineNumber: lineNumber,
+                        lineStart: lineStart,
+                        range: [start, index]
+                    };
+                }
+            } else {
+                ++index;
+            }
+        }
+        return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+    }
+
 
     // 7.7 Punctuators
 
@@ -752,9 +790,13 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             }
         }
 
-        if (ch1 === '<' && ch2 === '!' && ch3 === '-' && ch4 === '-') {
-            // XML Comment
-            return scanXMLComment();
+        if (ch1 === '<' && ch2 === '!') {
+            if (ch3 === '-' && ch4 === '-') {
+                return scanXMLComment();
+            }
+            if (ch3 === '[' && ch4 === 'C' && source[index + 4] === 'D' && source[index + 5] === 'A' && source[index + 6] === 'T' && source[index + 7] === 'A' && source[index + 8] === '[') {
+                return scanXMLCdata();
+            }
         }
 
         // 3-character punctuators: === !== >>> <<= >>=
@@ -2125,10 +2167,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             };
         },
 
-        createXMLCdata: function (contents) {
+        createXMLCdata: function (token) {
             return {
                 type: Syntax.XMLCdata,
-                contents: contents
+                contents: source.slice(token.range[0] + 9, token.range[1] - 3)
             };
         },
 
@@ -2857,6 +2899,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
         if (type === Token.XMLComment) {
             return delegate.createXMLComment(lex());
+        }
+
+        if (type === Token.XMLCdata) {
+            return delegate.createXMLCdata(lex());
         }
 
         if (match('<')) {
