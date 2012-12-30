@@ -40,7 +40,7 @@ parseImportSpecifier: true,
 parseLeftHandSideExpression: true, parseParams: true, validateParam: true,
 parseSpreadOrAssignmentExpression: true,
 parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseConciseBody: true,
-parseYieldExpression: true
+parseYieldExpression: true, parseForVariableDeclaration: true
 */
 
 (function (root, factory) {
@@ -162,7 +162,25 @@ parseYieldExpression: true
         VariableDeclarator: 'VariableDeclarator',
         WhileStatement: 'WhileStatement',
         WithStatement: 'WithStatement',
-        YieldExpression: 'YieldExpression'
+        YieldExpression: 'YieldExpression',
+        XMLDefaultDeclaration: 'XMLDefaultDeclaration',
+        XMLAnyName: 'XMLAnyName',
+        XMLQualifiedIdentifier: 'XMLQualifiedIdentifier',
+        XMLFunctionQualifiedIdentifier: 'XMLFunctionQualifiedIdentifier',
+        XMLAttributeSelector: 'XMLAttributeSelector',
+        XMLFilterExpression: 'XMLFilterExpression',
+        XMLElement: 'XMLElement',
+        XMLList: 'XMLList',
+        XMLEscape: 'XMLEscape',
+        XMLText: 'XMLText',
+        XMLStartTag: 'XMLStartTag',
+        XMLEndTag: 'XMLEndTag',
+        XMLPointTag: 'XMLPointTag',
+        XMLName: 'XMLName',
+        XMLAttribute: 'XMLAttribute',
+        XMLCdata: 'XMLCdata',
+        XMLComment: 'XMLComment',
+        XMLProcessingInstruction: 'XMLProcessingInstruction'
     };
 
     PropertyKind = {
@@ -606,7 +624,6 @@ parseYieldExpression: true
         case 125:  // } close curly brace
         case 91:   // [
         case 93:   // ]
-        case 58:   // :
         case 63:   // ?
         case 126:  // ~
             ++index;
@@ -756,7 +773,28 @@ parseYieldExpression: true
             };
         }
 
-        if ('<>=!+-*%&|^/'.indexOf(ch1) >= 0) {
+        if (ch1 === ':') {
+            if (ch2 === ':') {
+                index += 2;
+                return {
+                    type: Token.Punctuator,
+                    value: '::',
+                    lineNumber: lineNumber,
+                    lineStart: lineStart,
+                    range: [start, index]
+                };
+            }
+            index++;
+            return {
+                type: Token.Punctuator,
+                value: ':',
+                lineNumber: lineNumber,
+                lineStart: lineStart,
+                range: [start, index]
+            };
+        }
+
+        if ('<>=!+-*%&|^/@'.indexOf(ch1) >= 0) {
             ++index;
             return {
                 type: Token.Punctuator,
@@ -768,6 +806,16 @@ parseYieldExpression: true
         }
 
         if (ch1 === '.') {
+            if (ch2 === '.') {
+                index += 2;
+                return {
+                    type: Token.Punctuator,
+                    value: '..',
+                    lineNumber: lineNumber,
+                    lineStart: lineStart,
+                    range: [start, index]
+                };
+            }
             ++index;
             return {
                 type: Token.Punctuator,
@@ -1539,13 +1587,13 @@ parseYieldExpression: true
             };
         },
 
-        createForInStatement: function (left, right, body) {
+        createForInStatement: function (left, right, body, each) {
             return {
                 type: Syntax.ForInStatement,
                 left: left,
                 right: right,
                 body: body,
-                each: false
+                each: each
             };
         },
 
@@ -1913,9 +1961,137 @@ parseYieldExpression: true
                 from: from,
                 body: body
             };
+        },
+
+        createXMLDefaultDeclaration: function (namespace) {
+            return {
+                type: Syntax.XMLDefaultDeclaration,
+                namespace: namespace
+            };
+        },
+
+        createXMLAnyName: function () {
+            return {
+                type: Syntax.XMLAnyName
+            };
+        },
+
+        createXMLQualifiedIdentifier: function (left, right, computed) {
+            return {
+                type: Syntax.XMLQualifiedIdentifier,
+                left: left,
+                right: right,
+                computed: computed
+            };
+        },
+
+        createXMLFunctionQualifiedIdentifier: function (right, computed) {
+            return {
+                type: Syntax.XMLFunctionQualifiedIdentifier,
+                right: right,
+                computed: computed
+            };
+        },
+
+        createXMLAttributeSelector: function (attribute) {
+            return {
+                type: Syntax.XMLAttributeSelector,
+                attribute: attribute
+            };
+        },
+
+        createXMLFilterExpression: function (left, right) {
+            return {
+                type: Syntax.XMLFilterExpression,
+                left: left,
+                right: right
+            };
+        },
+
+        createXMLElement: function (contents) {
+            return {
+                type: Syntax.XMLElement,
+                contents: contents
+            };
+        },
+
+        createXMLList: function (contents) {
+            return {
+                type: Syntax.XMLList,
+                contents: contents
+            };
+        },
+
+        createXMLEscape: function (expression) {
+            return {
+                type: Syntax.XMLEscape,
+                expression: expression
+            };
+        },
+
+        createXMLText: function (string) {
+            return {
+                type: Syntax.XMLText,
+                string: string
+            };
+        },
+
+        createXMLStartTag: function (contents) {
+            return {
+                type: Syntax.XMLStartTag,
+                contents: contents
+            };
+        },
+
+        createXMLEndTag: function (contents) {
+            return {
+                type: Syntax.XMLEndTag,
+                contents: contents
+            };
+        },
+
+        createXMLPointTag: function (contents) {
+            return {
+                type: Syntax.XMLPointTag,
+                contents: contents
+            };
+        },
+
+        createXMLName: function (contents) {
+            return {
+                type: Syntax.XMLName,
+                contents: contents
+            };
+        },
+
+        createXMLAttribute: function (value) {
+            return {
+                type: Syntax.XMLAttribute,
+                value: value
+            };
+        },
+
+        createXMLCdata: function (contents) {
+            return {
+                type: Syntax.XMLCdata,
+                contents: contents
+            };
+        },
+
+        createXMLComment: function (contents) {
+            return {
+                type: Syntax.XMLComment,
+                contents: contents
+            };
+        },
+
+        createXMLProcessingInstruction: function (target, contents) {
+            return {
+                type: Syntax.XMLProcessingInstruction,
+                target: target,
+                contents: contents
+            };
         }
-
-
     };
 
     // Return true if there is a line terminator before the next token.
@@ -2029,6 +2205,16 @@ parseYieldExpression: true
     function expectKeyword(keyword) {
         var token = lex();
         if (token.type !== Token.Keyword || token.value !== keyword) {
+            throwUnexpected(token);
+        }
+    }
+
+    // Expect the next token to match the specified contextual keyword.
+    // If not, an exception will be thrown.
+
+    function expectContextualKeyword(keyword) {
+        var token = lex();
+        if (token.type !== Token.Identifier || token.value !== keyword) {
             throwUnexpected(token);
         }
     }
@@ -2394,6 +2580,155 @@ parseYieldExpression: true
         return expr;
     }
 
+    // E4X
+
+    function parseXMLForEachStatement() {
+        var test, update, left, right, body, oldInIteration, each;
+
+        expectKeyword('for');
+
+        expectContextualKeyword('each');
+
+        expect('(');
+
+        if (matchKeyword('var') || matchKeyword('let') || matchKeyword('const')) {
+            state.allowIn = false;
+            left = parseForVariableDeclaration();
+            state.allowIn = true;
+
+            if (left.declarations.length !== 1) {
+                throwUnexpected(lex());
+            }
+            expectKeyword('in');
+            if (left.kind !== 'var' && left.declarations[0].init) {
+                throwUnexpected(lex());
+            }
+            right = parseExpression();
+        } else {
+            state.allowIn = false;
+            left = parseExpression();
+            state.allowIn = true;
+
+            expectKeyword('in');
+            // LeftHandSideExpression
+            if (!isAssignableLeftHandSide(left)) {
+                throwError({}, Messages.InvalidLHSInForIn);
+            }
+            right = parseExpression();
+        }
+
+        expect(')');
+
+        oldInIteration = state.inIteration;
+        state.inIteration = true;
+
+        body = parseStatement();
+
+        state.inIteration = oldInIteration;
+
+        return delegate.createForInStatement(left, right, body, true);
+    }
+
+    function parseXMLDefaultDeclaration() {
+        var namespace;
+
+        expectKeyword('default');
+        expectContextualKeyword('xml');
+        expectContextualKeyword('namespace');
+
+        expect('=');
+
+        namespace = parseExpression();
+
+        consumeSemicolon();
+
+        return delegate.createXMLDefaultDeclaration(namespace);
+    }
+
+    function parseXMLAnyName() {
+        lex();  // *
+        return delegate.createXMLAnyName();
+    }
+
+    function parseXMLPropertySelector(options) {
+        var token = lookahead;
+        if (options.reserved ? token.type === Token.Identifier : isIdentifierName(token)) {
+            return delegate.createIdentifier(lex().value);
+        }
+        if (match('*')) {
+            return parseXMLAnyName();
+        }
+        throwUnexpected(lex());
+    }
+
+    function parseXMLQualifiedIdentifier(options) {
+        var former, latter, computed = false;
+
+        former = parseXMLPropertySelector(options);
+
+        if (!match('::')) {
+            return former;
+        }
+
+        lex();
+
+        if (match('[')) {
+            computed = true;
+            lex();
+            latter = parseExpression();
+            expect(']');
+        } else {
+            latter = parseXMLPropertySelector({ reserved: false });
+        }
+
+        return delegate.createXMLQualifiedIdentifier(former, latter, computed);
+    }
+
+    function parseXMLAttributeSelector() {
+        var expr;
+        lex();  // @
+        if (match('[')) {
+            lex();
+            expr = parseExpression();
+            expect(']');
+        } else {
+            expr = parseXMLQualifiedIdentifier({ reserved: false });
+        }
+        return delegate.createXMLAttributeSelector(expr);
+    }
+
+    function parseXMLPropertyIdentifier(options) {
+        if (match('@')) {
+            return parseXMLAttributeSelector();
+        }
+        return parseXMLQualifiedIdentifier(options);
+    }
+
+    function parseXMLLeftHandSideExpression(expr) {
+        expect('..');
+        return parseXMLPropertyIdentifier({ reserved: false });
+    }
+
+    function parseXMLFunctionQualifiedIdentifier() {
+        var expr, computed = false;
+
+        expectKeyword('function');
+        expect('::');
+
+        if (match('[')) {
+            computed = true;
+            lex();
+            expr = parseExpression();
+            expect(']');
+        } else {
+            expr = parseXMLPropertySelector({ reserved: false });
+        }
+
+        return delegate.createXMLFunctionQualifiedIdentifier(expr, computed);
+    }
+
+    function parseXMLInitialiser() {
+    }
 
     // 11.1 Primary Expressions
 
@@ -2404,8 +2739,7 @@ parseYieldExpression: true
         type = lookahead.type;
 
         if (type === Token.Identifier) {
-            lex();
-            return delegate.createIdentifier(token.value);
+            return parseXMLQualifiedIdentifier({ reserved: true });
         }
 
         if (type === Token.StringLiteral || type === Token.NumericLiteral) {
@@ -2422,6 +2756,10 @@ parseYieldExpression: true
             }
 
             if (matchKeyword('function')) {
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '::') {
+                    return parseXMLFunctionQualifiedIdentifier();
+                }
                 return parseFunctionExpression();
             }
 
@@ -2463,11 +2801,15 @@ parseYieldExpression: true
             return delegate.createLiteral(scanRegExp());
         }
 
+        if (match('<')) {
+            return parseXMLInitialiser();
+        }
+
         if (type === Token.Template) {
             return parseTemplateLiteral();
         }
 
-        return throwUnexpected(lex());
+        return parseXMLPropertyIdentifier({ reserved: true });
     }
 
     // 11.2 Left-Hand-Side Expressions
@@ -2506,13 +2848,12 @@ parseYieldExpression: true
     }
 
     function parseNonComputedProperty() {
-        var token = lex();
-
-        if (!isIdentifierName(token)) {
-            throwUnexpected(token);
+        var token = lookahead;
+        if (!isIdentifierName(token) && !match('*') && !match('@')) {
+            throwUnexpected(lex());
         }
 
-        return delegate.createIdentifier(token.value);
+        return parseXMLPropertyIdentifier({ reserved: false });
     }
 
     function parseNonComputedMember() {
@@ -2544,18 +2885,29 @@ parseYieldExpression: true
     }
 
     function parseLeftHandSideExpressionAllowCall() {
-        var expr, args, property;
+        var expr, args, property, token;
 
         expr = matchKeyword('new') ? parseNewExpression() : parsePrimaryExpression();
 
-        while (match('.') || match('[') || match('(') || lookahead.type === Token.Template) {
+        while (match('.') || match('[') || match('(') || match('..') || lookahead.type === Token.Template) {
             if (match('(')) {
                 args = parseArguments();
                 expr = delegate.createCallExpression(expr, args);
             } else if (match('[')) {
                 expr = delegate.createMemberExpression('[', expr, parseComputedMember());
             } else if (match('.')) {
-                expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '(') {
+                    lex();
+                    lex();
+                    args = parseExpression();
+                    expect(')');
+                    expr = delegate.createXMLFilterExpression(expr, args);
+                } else {
+                    expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                }
+            } else if (match('..')) {
+                expr = delegate.createBinaryExpression('..', expr, parseXMLLeftHandSideExpression());
             } else {
                 expr = delegate.createTaggedTemplateExpression(expr, parseTemplateLiteral());
             }
@@ -2564,17 +2916,27 @@ parseYieldExpression: true
         return expr;
     }
 
-
     function parseLeftHandSideExpression() {
-        var expr, property;
+        var expr, property, token, args;
 
         expr = matchKeyword('new') ? parseNewExpression() : parsePrimaryExpression();
 
-        while (match('.') || match('[') || lookahead.type === Token.Template) {
+        while (match('.') || match('[') || match('..') || lookahead.type === Token.Template) {
             if (match('[')) {
                 expr = delegate.createMemberExpression('[', expr, parseComputedMember());
             } else if (match('.')) {
-                expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '(') {
+                    lex();
+                    lex();
+                    args = parseExpression();
+                    expect(')');
+                    expr = delegate.createXMLFilterExpression(expr, args);
+                } else {
+                    expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                }
+            } else if (match('..')) {
+                expr = delegate.createBinaryExpression('..', expr, parseXMLLeftHandSideExpression());
             } else {
                 expr = delegate.createTaggedTemplateExpression(expr, parseTemplateLiteral());
             }
@@ -3427,14 +3789,17 @@ parseYieldExpression: true
     }
 
     function parseForStatement(opts) {
-        var init, test, update, left, right, body, operator, oldInIteration;
+        var init, test, update, left, right, body, operator, oldInIteration, each;
         init = test = update = null;
-        expectKeyword('for');
+
+        each = lookahead2();
 
         // http://wiki.ecmascript.org/doku.php?id=proposals:iterators_and_generators&s=each
-        if (matchContextualKeyword("each")) {
-            throwError({}, Messages.EachNotAllowed);
+        if (matchKeyword('for') && each.type === Token.Identifier && each.value === 'each') {
+            return parseXMLForEachStatement();
         }
+
+        expectKeyword('for');
 
         expect('(');
 
@@ -3512,7 +3877,7 @@ parseYieldExpression: true
         }
 
         if (operator.value === 'in') {
-            return delegate.createForInStatement(left, right, body);
+            return delegate.createForInStatement(left, right, body, false);
         }
         return delegate.createForOfStatement(left, right, body);
     }
@@ -3665,7 +4030,8 @@ parseYieldExpression: true
     // 12.10 The swith statement
 
     function parseSwitchCase() {
-        var test,
+        var token,
+            test,
             consequent = [],
             sourceElement;
 
@@ -3679,8 +4045,14 @@ parseYieldExpression: true
         expect(':');
 
         while (index < length) {
-            if (match('}') || matchKeyword('default') || matchKeyword('case')) {
+            if (match('}') || matchKeyword('case')) {
                 break;
+            }
+            if (matchKeyword('default')) {
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === ':') {
+                    break;
+                }
             }
             sourceElement = parseSourceElement();
             if (typeof sourceElement === 'undefined') {
@@ -3817,7 +4189,8 @@ parseYieldExpression: true
         var type = lookahead.type,
             expr,
             labeledBody,
-            key;
+            key,
+            token;
 
         if (type === Token.EOF) {
             throwUnexpected(lookahead);
@@ -3849,6 +4222,10 @@ parseYieldExpression: true
             case 'for':
                 return parseForStatement();
             case 'function':
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '::') {
+                    break;
+                }
                 return parseFunctionDeclaration();
             case 'class':
                 return parseClassDeclaration();
@@ -3868,6 +4245,8 @@ parseYieldExpression: true
                 return parseWhileStatement();
             case 'with':
                 return parseWithStatement();
+            case 'default':
+                return parseXMLDefaultDeclaration();
             default:
                 break;
             }
@@ -4297,12 +4676,17 @@ parseYieldExpression: true
     // 15 Program
 
     function parseSourceElement() {
+        var token;
         if (lookahead.type === Token.Keyword) {
             switch (lookahead.value) {
             case 'const':
             case 'let':
                 return parseConstLetDeclaration(lookahead.value);
             case 'function':
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '::') {
+                    break;
+                }
                 return parseFunctionDeclaration();
             default:
                 return parseStatement();
@@ -4762,20 +5146,35 @@ parseYieldExpression: true
     }
 
     function trackLeftHandSideExpression() {
-        var marker, expr;
+        var marker, expr, token, args;
 
         skipComment();
         marker = createLocationMarker();
 
         expr = matchKeyword('new') ? parseNewExpression() : parsePrimaryExpression();
 
-        while (match('.') || match('[') || lookahead.type === Token.Template) {
+        while (match('.') || match('[') || match('..') || lookahead.type === Token.Template) {
             if (match('[')) {
                 expr = delegate.createMemberExpression('[', expr, parseComputedMember());
                 marker.end();
                 marker.apply(expr);
             } else if (match('.')) {
-                expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '(') {
+                    lex();
+                    lex();
+                    args = parseExpression();
+                    expect(')');
+                    expr = delegate.createXMLFilterExpression(expr, args);
+                    marker.end();
+                    marker.apply(expr);
+                } else {
+                    expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                    marker.end();
+                    marker.apply(expr);
+                }
+            } else if (match('..')) {
+                expr = delegate.createBinaryExpression('..', expr, parseXMLLeftHandSideExpression());
                 marker.end();
                 marker.apply(expr);
             } else {
@@ -4789,14 +5188,14 @@ parseYieldExpression: true
     }
 
     function trackLeftHandSideExpressionAllowCall() {
-        var marker, expr, args;
+        var marker, expr, args, token;
 
         skipComment();
         marker = createLocationMarker();
 
         expr = matchKeyword('new') ? parseNewExpression() : parsePrimaryExpression();
 
-        while (match('.') || match('[') || match('(') || lookahead.type === Token.Template) {
+        while (match('.') || match('[') || match('(') || match('..') || lookahead.type === Token.Template) {
             if (match('(')) {
                 args = parseArguments();
                 expr = delegate.createCallExpression(expr, args);
@@ -4807,7 +5206,22 @@ parseYieldExpression: true
                 marker.end();
                 marker.apply(expr);
             } else if (match('.')) {
-                expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '(') {
+                    lex();
+                    lex();
+                    args = parseExpression();
+                    expect(')');
+                    expr = delegate.createXMLFilterExpression(expr, args);
+                    marker.end();
+                    marker.apply(expr);
+                } else {
+                    expr = delegate.createMemberExpression('.', expr, parseNonComputedMember());
+                    marker.end();
+                    marker.apply(expr);
+                }
+            } else if (match('..')) {
+                expr = delegate.createBinaryExpression('..', expr, parseXMLLeftHandSideExpression());
                 marker.end();
                 marker.apply(expr);
             } else {
@@ -4973,6 +5387,14 @@ parseYieldExpression: true
             extra.parseClassDeclaration = parseClassDeclaration;
             extra.parseClassExpression = parseClassExpression;
             extra.parseClassBody = parseClassBody;
+            extra.parseXMLAnyName = parseXMLAnyName;
+            extra.parseXMLPropertySelector = parseXMLPropertySelector;
+            extra.parseXMLQualifiedIdentifier = parseXMLQualifiedIdentifier;
+            extra.parseXMLAttributeSelector = parseXMLAttributeSelector;
+            extra.parseXMLPropertyIdentifier = parseXMLPropertyIdentifier;
+            extra.parseXMLDefaultDeclaration = parseXMLDefaultDeclaration;
+            extra.parseXMLForEachStatement = parseXMLForEachStatement;
+            extra.parseXMLFunctionQualifiedIdentifier = parseXMLFunctionQualifiedIdentifier;
 
             parseAssignmentExpression = wrapTracking(extra.parseAssignmentExpression);
             parseBinaryExpression = wrapTracking(extra.parseBinaryExpression);
@@ -5018,6 +5440,14 @@ parseYieldExpression: true
             parseClassDeclaration = wrapTracking(extra.parseClassDeclaration);
             parseClassExpression = wrapTracking(extra.parseClassExpression);
             parseClassBody = wrapTracking(extra.parseClassBody);
+            parseXMLAnyName = wrapTracking(extra.parseXMLAnyName);
+            parseXMLPropertySelector = wrapTracking(extra.parseXMLPropertySelector);
+            parseXMLQualifiedIdentifier = wrapTracking(extra.parseXMLQualifiedIdentifier);
+            parseXMLAttributeSelector = wrapTracking(extra.parseXMLAttributeSelector);
+            parseXMLPropertyIdentifier = wrapTracking(extra.parseXMLPropertyIdentifier);
+            parseXMLDefaultDeclaration = wrapTracking(extra.parseXMLDefaultDeclaration);
+            parseXMLForEachStatement = wrapTracking(extra.parseXMLForEachStatement);
+            parseXMLFunctionQualifiedIdentifier = wrapTracking(extra.parseXMLFunctionQualifiedIdentifier);
         }
 
         if (typeof extra.tokens !== 'undefined') {
@@ -5080,6 +5510,14 @@ parseYieldExpression: true
             parseClassDeclaration = extra.parseClassDeclaration;
             parseClassExpression = extra.parseClassExpression;
             parseClassBody = extra.parseClassBody;
+            parseXMLAnyName = extra.parseXMLAnyName;
+            parseXMLPropertySelector = extra.parseXMLPropertySelector;
+            parseXMLQualifiedIdentifier = extra.parseXMLQualifiedIdentifier;
+            parseXMLAttributeSelector = extra.parseXMLAttributeSelector;
+            parseXMLPropertyIdentifier = extra.parseXMLPropertyIdentifier;
+            parseXMLDefaultDeclaration = extra.parseXMLDefaultDeclaration;
+            parseXMLForEachStatement = extra.parseXMLForEachStatement;
+            parseXMLFunctionQualifiedIdentifier = extra.parseXMLFunctionQualifiedIdentifier;
         }
 
         if (typeof extra.scanRegExp === 'function') {

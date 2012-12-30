@@ -17818,7 +17818,25 @@ var testFixture = {
                 VariableDeclarator: 'VariableDeclarator',
                 WhileStatement: 'WhileStatement',
                 WithStatement: 'WithStatement',
-                YieldExpression: 'YieldExpression'
+                YieldExpression: 'YieldExpression',
+                XMLDefaultDeclaration: 'XMLDefaultDeclaration',
+                XMLAnyName: 'XMLAnyName',
+                XMLQualifiedIdentifier: 'XMLQualifiedIdentifier',
+                XMLFunctionQualifiedIdentifier: 'XMLFunctionQualifiedIdentifier',
+                XMLAttributeSelector: 'XMLAttributeSelector',
+                XMLFilterExpression: 'XMLFilterExpression',
+                XMLElement: 'XMLElement',
+                XMLList: 'XMLList',
+                XMLEscape: 'XMLEscape',
+                XMLText: 'XMLText',
+                XMLStartTag: 'XMLStartTag',
+                XMLEndTag: 'XMLEndTag',
+                XMLPointTag: 'XMLPointTag',
+                XMLName: 'XMLName',
+                XMLAttribute: 'XMLAttribute',
+                XMLCdata: 'XMLCdata',
+                XMLComment: 'XMLComment',
+                XMLProcessingInstruction: 'XMLProcessingInstruction'
             }
         }
 
