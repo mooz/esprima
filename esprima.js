@@ -633,12 +633,11 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     // E4X scanner
 
     function scanXMLComment() {
-        var start, ch1, ch2, ch3, contents;
+        var start, ch1, ch2, ch3;
 
         start = index;
         index += 4;  // <!--
 
-        contents = index;
         while (index < length) {
             ch1 = source.charCodeAt(index);
             // --
@@ -667,7 +666,6 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     ++index;
                     return {
                         type: Token.XMLComment,
-                        contents: source.slice(contents, index - 3),
                         lineNumber: lineNumber,
                         lineStart: lineStart,
                         range: [start, index]
@@ -681,12 +679,11 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     }
 
     function scanXMLCdata() {
-        var start, ch, contents;
+        var start, ch;
 
         start = index;
         index += 9;  // <![CDATA[
 
-        contents = index;
         while (index < length) {
             ch = source.charCodeAt(index);
             // ]]>
@@ -706,7 +703,6 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     index += 2;
                     return {
                         type: Token.XMLCdata,
-                        contents: source.slice(contents, index - 3),
                         lineNumber: lineNumber,
                         lineStart: lineStart,
                         range: [start, index]
@@ -803,7 +799,6 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         }
         return throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
     }
-
 
     // 7.7 Punctuators
 
