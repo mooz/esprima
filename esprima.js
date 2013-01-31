@@ -734,11 +734,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     }
 
     function scanXMLProcessingInstruction() {
-        var start, ch, state, target, contents, id;
+        var start, ch, target, contents;
 
         start = index;
         index += 2;  // <?
-        state = 0;  // 0 => target, 1 => space, 2 => contents
         target = '';
         contents = '';
 
