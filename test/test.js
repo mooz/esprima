@@ -17836,7 +17836,9 @@ var testFixture = {
                 XMLAttribute: 'XMLAttribute',
                 XMLCdata: 'XMLCdata',
                 XMLComment: 'XMLComment',
-                XMLProcessingInstruction: 'XMLProcessingInstruction'
+                XMLProcessingInstruction: 'XMLProcessingInstruction',
+                LetExpression: 'LetExpression',
+                LetStatement: 'LetStatement'
             }
         }
 

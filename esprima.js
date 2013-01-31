@@ -37,7 +37,9 @@ parseForStatement: true,
 parseFunctionDeclaration: true, parseFunctionExpression: true,
 parseFunctionSourceElements: true, parseVariableIdentifier: true,
 parseImportSpecifier: true,
-parseLeftHandSideExpression: true, parseParams: true, validateParam: true,
+parseLeftHandSideExpression: true,
+parseLetExpression: true, parseLetStatement: true,
+parseParams: true, validateParam: true,
 parseSpreadOrAssignmentExpression: true,
 parseStatement: true, parseSourceElement: true, parseModuleBlock: true, parseConciseBody: true,
 parseYieldExpression: true, parseForVariableDeclaration: true
@@ -137,6 +139,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         ImportDeclaration: 'ImportDeclaration',
         ImportSpecifier: 'ImportSpecifier',
         LabeledStatement: 'LabeledStatement',
+        LetExpression: 'LetExpression',
+        LetStatement: 'LetStatement',
         Literal: 'Literal',
         LogicalExpression: 'LogicalExpression',
         MemberExpression: 'MemberExpression',
@@ -2262,6 +2266,22 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 target: target,
                 contents: contents
             };
+        },
+
+        createLetExpression: function (head, body) {
+            return {
+                type: Syntax.LetExpression,
+                head: head,
+                body: body
+            };
+        },
+
+        createLetStatement: function (head, body) {
+            return {
+                type: Syntax.LetStatement,
+                head: head,
+                body: body
+            };
         }
     };
 
@@ -2942,6 +2962,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 lex();
                 return delegate.createIdentifier('super');
             }
+
+            if (matchKeyword('let')) {
+                return parseLetExpression();
+            }
         }
 
         if (type === Token.BooleanLiteral) {
@@ -3420,6 +3444,33 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 throwError({}, Messages.InvalidLHSInFormalsList);
             }
         }
+    }
+
+    function getIdentifierListFromPattern(pattern) {
+        var ids = [], i, len;
+
+        switch (pattern.type) {
+        case Syntax.ArrayPattern:
+            for (i = 0, len = pattern.elements; i < len; ++i) {
+                if (pattern.elements[i]) {
+                    ids = ids.concat(getIdentifierListFromPattern(pattern.elements[i]));
+                }
+            }
+            break;
+        case Syntax.ObjectPattern:
+            if (pattern.value) {
+                ids = ids.concat(getIdentifierListFromPattern(pattern.value));
+            }
+            break;
+        case Syntax.Identifier:
+            ids.push(pattern);
+            break;
+        default:
+            assert(false);
+            break;
+        }
+
+        return ids;
     }
 
     function reinterpretAsCoverFormalsList(expressions) {
@@ -4431,6 +4482,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 return parseWithStatement();
             case 'default':
                 return parseXMLDefaultDeclaration();
+            case 'let':
+                return parseLetStatement();
             default:
                 break;
             }
@@ -4758,6 +4811,85 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         state.yieldFound = true;
 
         return delegate.createYieldExpression(expr, delegateFlag);
+    }
+
+    // let-expression and let-statement (SpiderMonkey-specific)
+
+    function parseAssignmentPattern() {
+        var pattern;
+
+        if (match('{')) {
+            pattern = parseObjectInitialiser();
+            reinterpretAsAssignmentBindingPattern(pattern);
+        } else if (match('[')) {
+            pattern = parseArrayInitialiser();
+            reinterpretAsAssignmentBindingPattern(pattern);
+        } else {
+            pattern = parseVariableIdentifier();
+        }
+
+        return pattern;
+    }
+
+    function parseLetHead() {
+        var expr, pattern, init, head = [],
+            id, ids = [], i, len, declaredIdMap;
+
+        expectKeyword('let');
+        expect('(');
+
+        while (true) {
+            pattern = parseAssignmentPattern();
+            if (match('=')) {
+                lex();
+                init = parseExpression();
+            } else {
+                init = null;
+            }
+            head.push({
+                id: pattern,
+                init: init
+            });
+            if (match(')')) {
+                lex();
+                break;
+            }
+            expect(',');
+        }
+
+        // Check redeclaration
+        for (i = 0, len = head.length; i < len; ++i) {
+            ids = ids.concat(getIdentifierListFromPattern(head[i].id));
+        }
+        declaredIdMap = Object.create(null);
+        for (i = 0, len = ids.length; i < len; ++i) {
+            id = ids[i];
+            if (declaredIdMap[id.name] === true) {
+                throwError({}, Messages.Redeclaration, 'Variable', id.name);
+            } else {
+                declaredIdMap[id.name] = true;
+            }
+        }
+
+        return head;
+    }
+
+    function parseLetExpression() {
+        var head, expr;
+
+        head = parseLetHead();
+        expr = parseExpression();
+
+        return delegate.createLetExpression(head, expr);
+    }
+
+    function parseLetStatement() {
+        var head, stmt;
+
+        head = parseLetHead();
+        stmt = parseStatement();
+
+        return delegate.createLetStatement(head, stmt);
     }
 
     // 14 Classes
@@ -5579,6 +5711,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             extra.parseXMLDefaultDeclaration = parseXMLDefaultDeclaration;
             extra.parseXMLForEachStatement = parseXMLForEachStatement;
             extra.parseXMLFunctionQualifiedIdentifier = parseXMLFunctionQualifiedIdentifier;
+            extra.parseLetExpression = parseLetExpression;
+            extra.parseLetStatement = parseLetStatement;
 
             parseAssignmentExpression = wrapTracking(extra.parseAssignmentExpression);
             parseBinaryExpression = wrapTracking(extra.parseBinaryExpression);
@@ -5632,6 +5766,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             parseXMLDefaultDeclaration = wrapTracking(extra.parseXMLDefaultDeclaration);
             parseXMLForEachStatement = wrapTracking(extra.parseXMLForEachStatement);
             parseXMLFunctionQualifiedIdentifier = wrapTracking(extra.parseXMLFunctionQualifiedIdentifier);
+            parseLetExpression = wrapTracking(extra.parseLetExpression);
+            parseLetStatement = wrapTracking(extra.parseLetStatement);
         }
 
         if (typeof extra.tokens !== 'undefined') {
