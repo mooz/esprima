@@ -633,11 +633,12 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     // E4X scanner
 
     function scanXMLComment() {
-        var start, ch1, ch2, ch3;
+        var start, ch1, ch2, ch3, contents;
 
         start = index;
         index += 4;  // <!--
 
+        contents = index;
         while (index < length) {
             ch1 = source.charCodeAt(index);
             // --
@@ -666,6 +667,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     ++index;
                     return {
                         type: Token.XMLComment,
+                        contents: source.slice(contents, index - 3),
                         lineNumber: lineNumber,
                         lineStart: lineStart,
                         range: [start, index]
@@ -679,11 +681,12 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     }
 
     function scanXMLCdata() {
-        var start, ch;
+        var start, ch, contents;
 
         start = index;
         index += 9;  // <![CDATA[
 
+        contents = index;
         while (index < length) {
             ch = source.charCodeAt(index);
             // ]]>
@@ -703,6 +706,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     index += 2;
                     return {
                         type: Token.XMLCdata,
+                        contents: source.slice(contents, index - 3),
                         lineNumber: lineNumber,
                         lineStart: lineStart,
                         range: [start, index]
@@ -739,7 +743,6 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         start = index;
         index += 2;  // <?
         target = '';
-        contents = '';
 
         ch = source.charCodeAt(index);
         if (!isXMLNameStart(ch)) {
@@ -767,6 +770,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             }
         }
 
+        contents = index;
         while (index < length) {
             ch = source.charCodeAt(index);
             // ?>
@@ -787,14 +791,13 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                     return {
                         type: Token.XMLProcessingInstruction,
                         target: target,
-                        contents: contents,
+                        contents: source.slice(contents, index - 2),
                         lineNumber: lineNumber,
                         lineStart: lineStart,
                         range: [start, index]
                     };
                 }
             } else {
-                contents += source[index];
                 ++index;
             }
         }
