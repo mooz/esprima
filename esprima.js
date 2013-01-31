@@ -1701,11 +1701,12 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             };
         },
 
-        createCatchClause: function (param, body) {
+        createCatchClause: function (param, guard, body) {
             return {
                 type: Syntax.CatchClause,
                 param: param,
-                body: body
+                body: body,
+                guard: guard
             };
         },
 
@@ -4365,7 +4366,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     // 12.14 The try statement
 
     function parseCatchClause() {
-        var param, body;
+        var param, body, guard;
 
         expectKeyword('catch');
 
@@ -4380,9 +4381,17 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             throwErrorTolerant({}, Messages.StrictCatchVariable);
         }
 
-        expect(')');
+        // spidermonkey: catch (e if expression)
+        if (match(')')) {
+            lex();
+        } else {
+            expectKeyword('if');
+            guard = parseExpression();
+            expect(')');
+        }
+
         body = parseBlock();
-        return delegate.createCatchClause(param, body);
+        return delegate.createCatchClause(param, guard, body);
     }
 
     function parseTryStatement() {
