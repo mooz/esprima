@@ -1002,6 +1002,56 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
     // 7.8.3 Numeric Literals
 
+    function scanHexLiteral(start) {
+        var number = '';
+
+        while (index < length) {
+            if (!isHexDigit(source[index])) {
+                break;
+            }
+            number += source[index++];
+        }
+
+        if (number.length === 0) {
+            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+        }
+
+        if (isIdentifierStart(source.charCodeAt(index))) {
+            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+        }
+
+        return {
+            type: Token.NumericLiteral,
+            value: parseInt('0x' + number, 16),
+            lineNumber: lineNumber,
+            lineStart: lineStart,
+            range: [start, index]
+        };
+    }
+
+    function scanOctalLiteral(start) {
+        var number = '0' + source[index++];
+        while (index < length) {
+            if (!isOctalDigit(source[index])) {
+                break;
+            }
+            number += source[index++];
+        }
+
+        if (isIdentifierStart(source.charCodeAt(index)) || isDecimalDigit(source.charCodeAt(index))) {
+            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
+        }
+
+        return {
+            type: Token.NumericLiteral,
+            value: parseInt(number, 8),
+            octal: true,
+            lineNumber: lineNumber,
+            lineStart: lineStart,
+            range: [start, index]
+        };
+    }
+
     function scanNumericLiteral() {
         var number, start, ch, octal;
 
@@ -1021,33 +1071,8 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             // Binary number in ES6 starts with '0b'.
             if (number === '0') {
                 if (ch === 'x' || ch === 'X') {
-                    number += source[index++];
-                    while (index < length) {
-                        ch = source[index];
-                        if (!isHexDigit(ch)) {
-                            break;
-                        }
-                        number += source[index++];
-                    }
-
-                    if (number.length <= 2) {
-                        // only 0x
-                        throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-                    }
-
-                    if (index < length) {
-                        ch = source[index];
-                        if (isIdentifierStart(ch.charCodeAt(0))) {
-                            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-                        }
-                    }
-                    return {
-                        type: Token.NumericLiteral,
-                        value: parseInt(number, 16),
-                        lineNumber: lineNumber,
-                        lineStart: lineStart,
-                        range: [start, index]
-                    };
+                    ++index;
+                    return scanHexLiteral(start);
                 }
                 if (ch === 'b' || ch === 'B') {
                     ++index;
@@ -1126,24 +1151,18 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 }
             }
 
-            while (index < length) {
-                if (!isDecimalDigit(source.charCodeAt(index))) {
-                    ch = source[index];
-                    break;
-                }
+            while (isDecimalDigit(source.charCodeAt(index))) {
                 number += source[index++];
             }
+            ch = source[index];
         }
 
         if (ch === '.') {
             number += source[index++];
-            while (index < length) {
-                if (!isDecimalDigit(source.charCodeAt(index))) {
-                    ch = source[index];
-                    break;
-                }
+            while (isDecimalDigit(source.charCodeAt(index))) {
                 number += source[index++];
             }
+            ch = source[index];
         }
 
         if (ch === 'e' || ch === 'E') {
@@ -1153,30 +1172,17 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             if (ch === '+' || ch === '-') {
                 number += source[index++];
             }
-
-            ch = source[index];
-            if (ch && isDecimalDigit(ch.charCodeAt(0))) {
-                number += source[index++];
-                while (index < length) {
-                    if (!isDecimalDigit(source.charCodeAt(index))) {
-                        ch = source[index];
-                        break;
-                    }
+            if (isDecimalDigit(source.charCodeAt(index))) {
+                while (isDecimalDigit(source.charCodeAt(index))) {
                     number += source[index++];
                 }
             } else {
-                ch = 'character ' + ch;
-                if (index >= length) {
-                    ch = '<end>';
-                }
                 throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
             }
         }
 
-        if (index < length) {
-            if (isIdentifierStart(source.charCodeAt(index))) {
-                throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
-            }
+        if (isIdentifierStart(source.charCodeAt(index))) {
+            throwError({}, Messages.UnexpectedToken, 'ILLEGAL');
         }
 
         return {
@@ -1647,6 +1653,10 @@ parseYieldExpression: true, parseForVariableDeclaration: true
     SyntaxTreeDelegate = {
 
         name: 'SyntaxTree',
+
+        postProcess: function (node) {
+            return node;
+        },
 
         createArrayExpression: function (elements) {
             return {
@@ -2290,6 +2300,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             msg = messageFormat.replace(
                 /%(\d)/g,
                 function (whole, index) {
+                    assert(index < args.length, 'Message reference must be in range');
                     return args[index];
                 }
             );
@@ -5280,6 +5291,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                         column: this.loc.end.column
                     }
                 };
+                node = delegate.postProcess(node);
             }
         };
 
@@ -5298,6 +5310,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                         column: this.loc.end.column
                     }
                 };
+                node = delegate.postProcess(node);
             }
         };
 
@@ -5473,11 +5486,13 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                             start: start,
                             end: end
                         };
+                        node = delegate.postProcess(node);
                     } else if (typeof node.loc === 'undefined') {
                         node.loc = {
                             start: node.left.loc.start,
                             end: node.right.loc.end
                         };
+                        node = delegate.postProcess(node);
                     }
                 }
             }
@@ -5710,6 +5725,26 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         }
     }
 
+    // This is used to modify the delegate.
+
+    function extend(object, properties) {
+        var entry, result = {};
+
+        for (entry in object) {
+            if (object.hasOwnProperty(entry)) {
+                result[entry] = object[entry];
+            }
+        }
+
+        for (entry in properties) {
+            if (properties.hasOwnProperty(entry)) {
+                result[entry] = properties[entry];
+            }
+        }
+
+        return result;
+    }
+
     function parse(code, options) {
         var program, toString;
 
@@ -5740,6 +5775,15 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         if (typeof options !== 'undefined') {
             extra.range = (typeof options.range === 'boolean') && options.range;
             extra.loc = (typeof options.loc === 'boolean') && options.loc;
+
+            if (extra.loc && options.source !== null && options.source !== undefined) {
+                delegate = extend(delegate, {
+                    'postProcess': function (node) {
+                        node.loc.source = toString(options.source);
+                        return node;
+                    }
+                });
+            }
 
             if (typeof options.tokens === 'boolean' && options.tokens) {
                 extra.tokens = [];
