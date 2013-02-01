@@ -3069,7 +3069,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
     // E4X parser
 
-    function parseXMLForEachStatement() {
+    function parseXMLForEachStatement(opts) {
         var test, update, left, right, body, oldInIteration, each;
 
         expectKeyword('for');
@@ -3109,7 +3109,9 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         oldInIteration = state.inIteration;
         state.inIteration = true;
 
-        body = parseStatement();
+        if (!(opts !== undefined && opts.ignore_body)) {
+            body = parseStatement();
+        }
 
         state.inIteration = oldInIteration;
 
@@ -4524,7 +4526,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
 
         // http://wiki.ecmascript.org/doku.php?id=proposals:iterators_and_generators&s=each
         if (matchKeyword('for') && each.type === Token.Identifier && each.value === 'each') {
-            return parseXMLForEachStatement();
+            return parseXMLForEachStatement(opts);
         }
 
         expectKeyword('for');
