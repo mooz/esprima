@@ -32,6 +32,10 @@ class RegExpGenerator(object):
     r = [ ch for ch in range(0x0080, 0xFFFF + 1) if self.detector.is_separator_space(ch)]
     return self._generate_range(r)
 
+  def generate_non_ascii_xml_name_part(self):
+    r = [ ch for ch in range(0x0080, 0xFFFF + 1) if self.detector.is_xml_name_part(ch)]
+    return self._generate_range(r)
+
   def _generate_range(self, r):
     if len(r) == 0:
       return '[]'
@@ -101,6 +105,10 @@ class Detector(object):
     c = self.data[ch]
     return c == 'Lu' or c == 'Ll' or c == 'Lt' or c == 'Lm' or c == 'Lo' or c == 'Nl' or c == 'Mn' or c == 'Mc' or c == 'Nd' or c == 'Pc' or ch == 0x200C or ch == 0x200D
 
+  def _is_non_ascii_xml_name_part(self, ch):
+    c = self.data[ch]
+    return c == 'Lu' or c == 'Ll' or c == 'Lt' or c == 'Lm' or c == 'Lo' or c == 'Nl' or c == 'Nd'
+
   def is_separator_space(self, ch):
     return self.data[ch] == 'Zs'
 
@@ -122,6 +130,11 @@ class Detector(object):
     if self.is_ascii(ch):
       return ch == ord('$') or ch == ord('_') or ch == ord('\\') or self.is_ascii_alphanumeric(ch)
     return self._is_non_ascii_identifier_part(ch)
+
+  def is_xml_name_part(self, ch):
+    if self.is_ascii(ch):
+      return ch == ord('.') or ch == ord('-') or ch == ord('_') or ch == ord(':') or self.is_ascii_alphanumeric(ch)
+    return self._is_non_ascii_xml_name_part(ch)
 
 def analyze(source):
   data = []
@@ -159,6 +172,7 @@ def main(source):
   print generator.generate_non_ascii_identifier_start()
   print generator.generate_non_ascii_identifier_part()
   print generator.generate_non_ascii_separator_space()
+  print generator.generate_non_ascii_xml_name_part()
 
 if __name__ == '__main__':
   main(sys.argv[1])
