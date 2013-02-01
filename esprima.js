@@ -3097,6 +3097,12 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             state.allowIn = true;
 
             expectKeyword('in');
+
+            if (left.type === Syntax.ArrayExpression ||
+                left.type === Syntax.ObjectExpression) {
+                reinterpretAsAssignmentBindingPattern(left);
+            }
+
             // LeftHandSideExpression
             if (!isAssignableLeftHandSide(left)) {
                 throwError({}, Messages.InvalidLHSInForIn);
@@ -4556,6 +4562,11 @@ parseYieldExpression: true, parseForVariableDeclaration: true
                 state.allowIn = false;
                 init = parseExpression();
                 state.allowIn = true;
+
+                if (init.type === Syntax.ArrayExpression ||
+                    init.type === Syntax.ObjectExpression) {
+                    reinterpretAsAssignmentBindingPattern(init);
+                }
 
                 if (matchContextualKeyword('of')) {
                     operator = lex();
