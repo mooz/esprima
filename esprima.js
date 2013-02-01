@@ -5349,10 +5349,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             } else {
                 init = null;
             }
-            head.push({
-                id: pattern,
-                init: init
-            });
+            head.push(delegate.createVariableDeclarator(pattern, init));
             if (match(')')) {
                 lex();
                 break;
