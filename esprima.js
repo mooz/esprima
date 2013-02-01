@@ -5497,7 +5497,12 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         if (lookahead.type === Token.Keyword) {
             switch (lookahead.value) {
             case 'const':
+                return parseConstLetDeclaration(lookahead.value);
             case 'let':
+                token = lookahead2();
+                if (token.type === Token.Punctuator && token.value === '(') {
+                    break;
+                }
                 return parseConstLetDeclaration(lookahead.value);
             case 'function':
                 token = lookahead2();
