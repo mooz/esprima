@@ -2866,7 +2866,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         if (options.name && strict && isRestrictedWord(params[0].name)) {
             throwErrorTolerant(options.name, Messages.StrictParamName);
         }
-        if (state.yieldAllowed && !state.yieldFound) {
+        if (state.yieldAllowed && !state.yieldFound && !extra.allow_starless_generators) {
             throwError({}, Messages.NoYieldInGenerator);
         }
         strict = previousStrict;
@@ -5196,6 +5196,9 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             lex();
             generator = true;
         }
+        if (!generator && extra.allow_starless_generators) {
+            generator = true;
+        }
 
         token = lookahead;
 
@@ -5234,7 +5237,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         if (strict && tmp.stricted) {
             throwErrorTolerant(tmp.stricted, message);
         }
-        if (state.yieldAllowed && !state.yieldFound) {
+        if (state.yieldAllowed && !state.yieldFound && !extra.allow_starless_generators) {
             throwError({}, Messages.NoYieldInGenerator);
         }
         strict = previousStrict;
@@ -5293,7 +5296,7 @@ parseYieldExpression: true, parseForVariableDeclaration: true
         if (strict && tmp.stricted) {
             throwErrorTolerant(tmp.stricted, message);
         }
-        if (state.yieldAllowed && !state.yieldFound) {
+        if (state.yieldAllowed && !state.yieldFound && !extra.allow_starless_generators) {
             throwError({}, Messages.NoYieldInGenerator);
         }
         strict = previousStrict;
@@ -6463,6 +6466,9 @@ parseYieldExpression: true, parseForVariableDeclaration: true
             }
             if (typeof options.tolerant === 'boolean' && options.tolerant) {
                 extra.errors = [];
+            }
+            if (typeof options.allow_starless_generators === 'boolean') {
+                extra.allow_starless_generators = options.allow_starless_generators;
             }
         }
 
